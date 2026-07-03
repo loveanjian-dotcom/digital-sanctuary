@@ -10,7 +10,7 @@ body{
   font-family:"Songti SC","Noto Serif SC",Georgia,"PingFang SC","Microsoft YaHei",serif;
   color:var(--ink);user-select:none;
 }
-canvas#world{position:fixed;inset:0;width:100vw;height:100vh;display:block}
+canvas#world,canvas#glworld{position:fixed;inset:0;width:100vw;height:100vh;display:block}
 
 /* ---------- 开场 ---------- */
 #veil{

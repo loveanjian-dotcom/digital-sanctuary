@@ -7,6 +7,7 @@ import snow from './scenes/snow.js';
 import fire from './scenes/fire.js';
 import ocean from './scenes/ocean.js';
 import stars, { spawnMeteor } from './scenes/stars.js';
+import { glResize } from './gl/renderer.js';
 
 /* =========================================================
    主入口:画布尺寸、主循环、场景切换、UI 绑定
@@ -56,6 +57,7 @@ function resize() {
   /* 小屏自动降低粒子密度:省电、保帧率(下限 0.4) */
   S.density = Math.max(.4, Math.min(1, (S.W * S.H) / (1280 * 800)));
   buildGrain();
+  glResize();
   scenes[sceneKey].onResize?.();
 }
 addEventListener('resize', resize);
@@ -147,7 +149,9 @@ function loop(now) {
   S.mouse.sy += (S.mouse.y - S.mouse.sy) * dt * 3;
   const mx = S.mouse.sx / S.W - .5, my = S.mouse.sy / S.H - .5;
 
-  scenes[sceneKey].draw(sceneT, mx, my);
+  const sc = scenes[sceneKey];
+  if (sc.gl) S.cx.clearRect(0, 0, S.W, S.H);   // shader 场景:2D 层清透明,只留叠加效果
+  sc.draw(sceneT, mx, my);
   drawRipples();
 
   const cx = S.cx;
