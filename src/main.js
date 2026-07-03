@@ -1,6 +1,7 @@
 import './style.css';
 import { S } from './core/state.js';
-import { initAudio, buildAudio, toggleMute } from './audio/engine.js';
+import { loadPrefs, updatePref } from './core/prefs.js';
+import { initAudio, buildAudio, toggleMute, setSleepTimer, getSleepRemaining } from './audio/engine.js';
 import rain from './scenes/rain.js';
 import snow from './scenes/snow.js';
 import fire from './scenes/fire.js';
@@ -12,7 +13,10 @@ import stars, { spawnMeteor } from './scenes/stars.js';
    ========================================================= */
 
 const scenes = { rain, snow, fire, ocean, stars };
-let sceneKey = 'rain';
+/* 初始场景优先级:网址 # 直链(如 xxx.app/#ocean) > 上次的记忆 > 默认雨夜 */
+const hashScene = location.hash.slice(1);
+const savedScene = loadPrefs().scene;
+let sceneKey = scenes[hashScene] ? hashScene : (scenes[savedScene] ? savedScene : 'rain');
 let sceneT = 0;
 let fade = 1, fadeTarget = 1;
 const ripples = [];
@@ -114,6 +118,8 @@ function switchScene(key) {
     document.getElementById('scene-name').textContent = scenes[key].name;
     buildAudio(key);
     fadeTarget = 1;
+    updatePref(p => { p.scene = key; });          // 记住这个场景
+    history.replaceState(null, '', '#' + key);    // 网址变成可分享的直链
   }, 1300);
 }
 
@@ -164,10 +170,34 @@ document.querySelectorAll('.scene-btn').forEach(b => {
   b.addEventListener('click', () => switchScene(b.dataset.scene));
 });
 const mixer = document.getElementById('mixer');
-document.getElementById('mixBtn').addEventListener('click', e => {
-  mixer.classList.toggle('open');
-  e.currentTarget.classList.toggle('on', mixer.classList.contains('open'));
+const sleeper = document.getElementById('sleeper');
+const mixBtn = document.getElementById('mixBtn');
+const sleepBtn = document.getElementById('sleepBtn');
+/* 两个面板互斥,同一时间只开一个 */
+function togglePanel(panel, btn, otherPanel, otherBtn) {
+  panel.classList.toggle('open');
+  btn.classList.toggle('on', panel.classList.contains('open'));
+  otherPanel.classList.remove('open');
+  otherBtn.classList.remove('on');
+}
+mixBtn.addEventListener('click', () => togglePanel(mixer, mixBtn, sleeper, sleepBtn));
+sleepBtn.addEventListener('click', () => togglePanel(sleeper, sleepBtn, mixer, mixBtn));
+
+/* 睡眠定时选项 */
+const sleepStatus = document.getElementById('sleepStatus');
+function refreshSleepStatus() {
+  const ms = getSleepRemaining();
+  sleepStatus.textContent = ms > 0 ? `声音将在 ${Math.ceil(ms / 60000)} 分钟后安睡` : '';
+}
+document.querySelectorAll('.sleep-opt').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.sleep-opt').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    setSleepTimer(+b.dataset.min);
+    refreshSleepStatus();
+  });
 });
+setInterval(refreshSleepStatus, 5000);
 const muteBtn = document.getElementById('muteBtn');
 muteBtn.addEventListener('click', () => {
   const muted = toggleMute();
@@ -192,7 +222,7 @@ document.getElementById('enter').addEventListener('click', () => {
   initAudio(sceneKey);   // 音频必须由用户手势触发
   enableGyro();          // 陀螺仪权限也必须在用户手势内请求(iOS 规定)
   document.getElementById('scene-name').textContent = scenes[sceneKey].name;
-  document.querySelector('.scene-btn[data-scene=rain]').classList.add('on');
+  document.querySelector(`.scene-btn[data-scene=${sceneKey}]`).classList.add('on');
   const hint = document.getElementById('hint');
   hint.classList.add('show');
   setTimeout(() => hint.classList.remove('show'), 6000);

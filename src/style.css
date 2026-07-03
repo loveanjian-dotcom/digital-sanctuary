@@ -60,8 +60,8 @@ body.idle #dock{opacity:0;pointer-events:none}
 .scene-btn svg,.icon-btn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 .divider{width:1px;height:22px;background:rgba(255,255,255,.11);margin:0 5px}
 
-/* ---------- 混音面板 ---------- */
-#mixer{
+/* ---------- 混音 & 睡眠面板 ---------- */
+#mixer,#sleeper{
   position:fixed;left:50%;bottom:calc(max(26px,env(safe-area-inset-bottom)) + 72px);
   transform:translateX(-50%) translateY(12px);
   width:min(320px,86vw);padding:22px 24px 18px;border-radius:24px;
@@ -71,8 +71,18 @@ body.idle #dock{opacity:0;pointer-events:none}
   opacity:0;pointer-events:none;transition:opacity .9s ease,transform .9s cubic-bezier(.2,.8,.2,1);
   z-index:29;
 }
-#mixer.open{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
-#mixer h3{font-weight:400;font-size:12px;letter-spacing:.45em;text-indent:.45em;color:var(--ink-dim);margin-bottom:18px;text-align:center}
+#mixer.open,#sleeper.open{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+#mixer h3,#sleeper h3{font-weight:400;font-size:12px;letter-spacing:.45em;text-indent:.45em;color:var(--ink-dim);margin-bottom:18px;text-align:center}
+.sleep-opts{display:flex;gap:8px}
+.sleep-opt{
+  flex:1;padding:9px 0;border-radius:12px;cursor:pointer;
+  background:rgba(255,255,255,.05);border:1px solid transparent;color:var(--ink-dim);
+  font-family:inherit;font-size:13px;letter-spacing:.05em;
+  transition:background .5s ease,color .5s ease;
+}
+.sleep-opt:hover{color:var(--ink)}
+.sleep-opt.on{background:rgba(255,255,255,.14);color:var(--ink)}
+#sleepStatus{margin-top:14px;text-align:center;font-size:12px;letter-spacing:.2em;color:var(--ink-dim);min-height:1em}
 .track{display:flex;align-items:center;gap:14px;margin-bottom:14px}
 .track:last-child{margin-bottom:2px}
 .track label{width:3.4em;font-size:13px;letter-spacing:.1em;color:var(--ink-dim);flex-shrink:0}

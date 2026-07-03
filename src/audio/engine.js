@@ -1,4 +1,5 @@
 import { S } from '../core/state.js';
+import { loadPrefs, updatePref } from '../core/prefs.js';
 
 /* =========================================================
    声音引擎 — 全部由代码实时合成,零音频文件
@@ -200,23 +201,29 @@ function stopAllAudio() {
 export function buildAudio(key) {
   if (!AC) return;
   stopAllAudio();
+  const savedVols = loadPrefs().volumes?.[key] || {};
   const tracksEl = document.getElementById('tracks');
   tracksEl.innerHTML = '';
   trackDefs[key].forEach(def => {
+    /* 有记忆用记忆,没有用默认值 */
+    const vol = savedVols[def.n] != null ? savedVols[def.n] : def.v;
     const g = AC.createGain();
     g.gain.value = 0;
-    g.gain.setTargetAtTime(def.v, AC.currentTime, 2.2);  // 2 秒淡入
+    g.gain.setTargetAtTime(vol, AC.currentTime, 2.2);  // 2 秒淡入
     g.connect(master);
     liveNodes.push(...def.make(g), g);
 
     const row = document.createElement('div'); row.className = 'track';
     const lab = document.createElement('label'); lab.textContent = def.n;
     const sl = document.createElement('input');
-    sl.type = 'range'; sl.min = 0; sl.max = 100; sl.value = def.v * 100;
-    sl.style.setProperty('--fill', def.v * 100 + '%');
+    sl.type = 'range'; sl.min = 0; sl.max = 100; sl.value = vol * 100;
+    sl.style.setProperty('--fill', vol * 100 + '%');
     sl.addEventListener('input', () => {
       sl.style.setProperty('--fill', sl.value + '%');
-      g.gain.setTargetAtTime(sl.value / 100, AC.currentTime, .15);
+      const v = sl.value / 100;
+      g.gain.setTargetAtTime(v, AC.currentTime, .15);
+      /* 记住这个场景这条音轨的音量 */
+      updatePref(p => { ((p.volumes ??= {})[key] ??= {})[def.n] = v; });
     });
     row.append(lab, sl); tracksEl.append(row);
   });
@@ -237,4 +244,29 @@ export function toggleMute() {
   muted = !muted;
   if (AC) master.gain.setTargetAtTime(muted ? 0 : .9, AC.currentTime, .4);
   return muted;
+}
+
+/* ---------- 睡眠定时 ----------
+   到设定时间后,主音量在约一分钟内缓缓淡出,
+   再过一会儿挂起整个音频引擎(手机省电)。
+   重新设定或选"关"会立刻恢复。 */
+let sleepTimer = null, suspendTimer = null, sleepAt = 0;
+
+export function setSleepTimer(minutes) {
+  clearTimeout(sleepTimer); clearTimeout(suspendTimer);
+  sleepAt = 0;
+  if (AC) {
+    AC.resume();   // 若正处在挂起/淡出中,先恢复
+    if (!muted) master.gain.setTargetAtTime(.9, AC.currentTime, .8);
+  }
+  if (!minutes) return;
+  sleepAt = Date.now() + minutes * 60000;
+  sleepTimer = setTimeout(() => {
+    if (AC) master.gain.setTargetAtTime(0, AC.currentTime, 22);   // 约 1 分钟的缓慢淡出
+    suspendTimer = setTimeout(() => { AC && AC.suspend(); }, 100000);
+  }, minutes * 60000);
+}
+
+export function getSleepRemaining() {
+  return sleepAt ? Math.max(0, sleepAt - Date.now()) : 0;
 }

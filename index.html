@@ -28,6 +28,18 @@
   <div id="tracks"></div>
 </div>
 
+<div id="sleeper">
+  <h3>睡 眠 定 时</h3>
+  <div class="sleep-opts">
+    <button class="sleep-opt on" data-min="0">关</button>
+    <button class="sleep-opt" data-min="15">15</button>
+    <button class="sleep-opt" data-min="30">30</button>
+    <button class="sleep-opt" data-min="60">60</button>
+    <button class="sleep-opt" data-min="90">90</button>
+  </div>
+  <div id="sleepStatus"></div>
+</div>
+
 <div id="dock">
   <button class="scene-btn" data-scene="rain" title="雨夜">
     <svg viewBox="0 0 24 24"><path d="M18 11a5 5 0 0 0-9.6-1.7A4 4 0 0 0 8 17h9a3 3 0 0 0 1-6z"/><line x1="8" y1="19.5" x2="7.2" y2="21.5"/><line x1="12" y1="19.5" x2="11.2" y2="21.5"/><line x1="16" y1="19.5" x2="15.2" y2="21.5"/></svg>
@@ -45,6 +57,9 @@
     <svg viewBox="0 0 24 24"><path d="M12 4.5l1.6 3.6 3.9.4-2.9 2.6.8 3.9L12 13l-3.4 2 .8-3.9-2.9-2.6 3.9-.4z"/><line x1="19.5" y1="4" x2="19.5" y2="7"/><line x1="18" y1="5.5" x2="21" y2="5.5"/><line x1="5" y1="17" x2="5" y2="19.6"/><line x1="3.7" y1="18.3" x2="6.3" y2="18.3"/></svg>
   </button>
   <div class="divider"></div>
+  <button class="icon-btn" id="sleepBtn" title="睡眠定时">
+    <svg viewBox="0 0 24 24"><path d="M20.4 14.5A8.5 8.5 0 0 1 9.5 3.6a8.5 8.5 0 1 0 10.9 10.9z"/></svg>
+  </button>
   <button class="icon-btn" id="fsBtn" title="全屏">
     <svg viewBox="0 0 24 24"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg>
   </button>
