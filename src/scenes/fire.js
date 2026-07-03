@@ -88,7 +88,7 @@ export default {
     cx.restore();
 
     /* 火焰粒子 */
-    const rate = S.reduced ? 2 : 4;
+    const rate = S.reduced ? 2 : (S.density < .6 ? 3 : 4);
     for (let i = 0; i < rate * boost; i++) spawnFlame(fx, fy, boost);
     cx.save(); cx.globalCompositeOperation = 'lighter';
     for (let i = fparts.length - 1; i >= 0; i--) {

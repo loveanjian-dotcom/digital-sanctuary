@@ -49,6 +49,8 @@ function resize() {
   S.W = innerWidth; S.H = innerHeight;
   cv.width = S.W * DPR; cv.height = S.H * DPR;
   S.cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  /* 小屏自动降低粒子密度:省电、保帧率(下限 0.4) */
+  S.density = Math.max(.4, Math.min(1, (S.W * S.H) / (1280 * 800)));
   buildGrain();
   scenes[sceneKey].onResize?.();
 }
@@ -72,6 +74,32 @@ function wake() {
   document.body.classList.remove('idle');
   clearTimeout(idleTimer);
   idleTimer = setTimeout(() => document.body.classList.add('idle'), 6000);
+}
+
+/* ---------- 陀螺仪视差(移动端) ----------
+   轻轻倾斜手机,场景像一扇真实的窗随之偏移。
+   gamma = 左右倾斜,beta = 前后倾斜(以 45° 持机角度为中心) */
+let gyroCalib = null;
+function onOrient(e) {
+  if (e.beta == null && e.gamma == null) return;
+  /* 第一次读数作为"中心姿势",之后相对它偏移,这样任何持机角度都自然 */
+  if (!gyroCalib) gyroCalib = { b: e.beta ?? 45, g: e.gamma ?? 0 };
+  const gx = Math.max(-1, Math.min(1, ((e.gamma ?? 0) - gyroCalib.g) / 22));
+  const gy = Math.max(-1, Math.min(1, ((e.beta ?? 45) - gyroCalib.b) / 22));
+  S.mouse.x = (gx * .5 + .5) * S.W;
+  S.mouse.y = (gy * .5 + .5) * S.H;
+}
+function enableGyro() {
+  /* iOS 需要在用户手势内请求权限;安卓直接监听即可 */
+  const DOE = window.DeviceOrientationEvent;
+  if (!DOE) return;
+  if (typeof DOE.requestPermission === 'function') {
+    DOE.requestPermission()
+      .then(p => { if (p === 'granted') addEventListener('deviceorientation', onOrient); })
+      .catch(() => { /* 用户拒绝就保持触摸交互 */ });
+  } else {
+    addEventListener('deviceorientation', onOrient);
+  }
 }
 
 /* ---------- 场景切换(黑场淡入淡出) ---------- */
@@ -147,10 +175,22 @@ muteBtn.addEventListener('click', () => {
   document.getElementById('volOff').style.display = muted ? '' : 'none';
   muteBtn.classList.toggle('on', !muted);
 });
+/* 全屏:沉浸的关键(iPhone 的 Safari 不支持此 API,按钮会自动隐藏,
+   iPhone 用户可以用"添加到主屏幕"获得等效的全屏体验) */
+const fsBtn = document.getElementById('fsBtn');
+if (!document.documentElement.requestFullscreen) {
+  fsBtn.style.display = 'none';
+} else {
+  fsBtn.addEventListener('click', () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  });
+}
 document.getElementById('enter').addEventListener('click', () => {
   document.getElementById('veil').classList.add('gone');
   document.body.classList.add('awake');
   initAudio(sceneKey);   // 音频必须由用户手势触发
+  enableGyro();          // 陀螺仪权限也必须在用户手势内请求(iOS 规定)
   document.getElementById('scene-name').textContent = scenes[sceneKey].name;
   document.querySelector('.scene-btn[data-scene=rain]').classList.add('on');
   const hint = document.getElementById('hint');

@@ -13,5 +13,6 @@ export const S = {
   flash: 0,
   oceanPulse: 0,
   fireBoost: 0,
+  density: 1,   // 粒子密度系数,按屏幕面积算,小屏自动降载(main.js 的 resize 里更新)
   reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
 };

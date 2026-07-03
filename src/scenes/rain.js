@@ -45,7 +45,7 @@ export default {
   name: '雨 · 夜',
   init() {
     initStars(60); initClouds(7); initTerrain();
-    initRain(S.reduced ? 70 : 190); initFlies(7);
+    initRain(S.reduced ? 70 : Math.round(190 * S.density)); initFlies(7);
   },
   draw(t, mx, my) {
     const cx = S.cx;

@@ -32,7 +32,7 @@ export default {
   name: '雪 · 夜',
   init() {
     initStars(110); initClouds(5); initTerrain();
-    initSnow(S.reduced ? 60 : 160);
+    initSnow(S.reduced ? 60 : Math.round(160 * S.density));
   },
   draw(t, mx, my) {
     const cx = S.cx;
